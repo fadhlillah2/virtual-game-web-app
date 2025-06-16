@@ -289,7 +289,7 @@
     <div class="game-container">
         <!-- Timer -->
         <div class="timer" id="timer">00:30</div>
-        
+
         <!-- Game Info -->
         <div class="game-info">
             <div><strong>Game:</strong> <span id="gameName">Texas Hold'em Poker</span></div>
@@ -297,12 +297,12 @@
             <div><strong>Round:</strong> <span id="roundNumber">1</span></div>
             <div><strong>Your Chips:</strong> <span id="playerChips">1,000</span></div>
         </div>
-        
+
         <!-- Poker Table -->
         <div class="poker-table">
             <!-- Pot -->
             <div class="pot" id="pot">Pot: 0</div>
-            
+
             <!-- Community Cards -->
             <div class="community-cards" id="communityCards">
                 <div class="card hidden">?</div>
@@ -311,7 +311,7 @@
                 <div class="card hidden">?</div>
                 <div class="card hidden">?</div>
             </div>
-            
+
             <!-- Player Positions -->
             <div class="player-position position-0" id="position-0">
                 <!-- Current player's position -->
@@ -322,7 +322,7 @@
             <div class="player-position position-4" id="position-4"></div>
             <div class="player-position position-5" id="position-5"></div>
         </div>
-        
+
         <!-- Action Panel -->
         <div class="action-panel" id="actionPanel" style="display: none;">
             <button class="btn btn-danger" id="foldBtn">Fold</button>
@@ -334,7 +334,7 @@
                 <span class="ms-2" id="betAmount">40</span>
             </div>
         </div>
-        
+
         <!-- Chat Panel -->
         <div class="chat-panel">
             <div class="chat-messages" id="chatMessages">
@@ -346,7 +346,7 @@
             </div>
         </div>
     </div>
-    
+
     <script>
         // Global variables
         let stompClient = null;
@@ -356,20 +356,20 @@
         let sessionId = '${sessionId}';
         let playerId = null;
         let timerInterval = null;
-        
+
         $(document).ready(function() {
             // Check if user is logged in
             if (!userToken) {
                 window.location.href = '/login';
                 return;
             }
-            
+
             // Load user data
             loadUserData();
-            
+
             // Connect to WebSocket
             connectWebSocket();
-            
+
             // Set up event handlers
             $('#leaveGameBtn').on('click', leaveGame);
             $('#foldBtn').on('click', () => sendGameAction('FOLD'));
@@ -383,13 +383,13 @@
                     sendChatMessage();
                 }
             });
-            
+
             // Handle window close/refresh
             $(window).on('beforeunload', function() {
                 leaveGame(false);
             });
         });
-        
+
         function loadUserData() {
             $.ajax({
                 url: '/api/users/me',
@@ -413,11 +413,11 @@
                 }
             });
         }
-        
+
         function connectWebSocket() {
             const socket = new SockJS('/ws');
             stompClient = Stomp.over(socket);
-            
+
             stompClient.connect({
                 'Authorization': 'Bearer ' + userToken
             }, function() {
@@ -426,38 +426,38 @@
                     const update = JSON.parse(message.body);
                     updateGameState(update);
                 });
-                
+
                 // Subscribe to chat messages
                 stompClient.subscribe('/topic/chat/' + sessionId, function(message) {
                     const chatMessage = JSON.parse(message.body);
                     displayChatMessage(chatMessage);
                 });
-                
+
                 // Join the game
                 joinGame();
             });
         }
-        
+
         function joinGame() {
             stompClient.send('/app/game.join', {}, JSON.stringify({
                 sessionId: sessionId
             }));
         }
-        
+
         function updateGameState(state) {
             gameState = state;
-            
+
             // Update game info
             $('#gameName').text(state.gameName);
             $('#blinds').text(state.smallBlind + '/' + state.bigBlind);
             $('#roundNumber').text(state.roundNumber);
             $('#pot').text('Pot: ' + formatNumber(state.potSize));
-            
+
             // Update player chips
             const playerState = state.players.find(p => p.id === playerId);
             if (playerState) {
                 $('#playerChips').text(formatNumber(playerState.chips));
-                
+
                 // Update bet slider
                 const minBet = Math.max(state.bigBlind, state.currentBet * 2);
                 const maxBet = playerState.chips;
@@ -466,23 +466,23 @@
                 $('#betSlider').val(minBet);
                 $('#betAmount').text(minBet);
             }
-            
+
             // Update community cards
             updateCommunityCards(state.communityCards);
-            
+
             // Update player positions
             updatePlayerPositions(state.players);
-            
+
             // Update action panel
             updateActionPanel(state);
-            
+
             // Update timer
             updateTimer(state.timeRemaining);
         }
-        
+
         function updateCommunityCards(cards) {
             const cardElements = $('#communityCards').children();
-            
+
             for (let i = 0; i < 5; i++) {
                 if (i < cards.length && cards[i]) {
                     const card = cards[i];
@@ -493,30 +493,30 @@
                 }
             }
         }
-        
+
         function updatePlayerPositions(players) {
             // Clear all positions
             for (let i = 0; i < 6; i++) {
                 $('#position-' + i).empty();
             }
-            
+
             // Find current player's position
             const currentPlayerIndex = players.findIndex(p => p.id === playerId);
             if (currentPlayerIndex === -1) return;
-            
+
             // Rearrange players so current player is at position 0
             const arrangedPlayers = [];
             for (let i = 0; i < players.length; i++) {
                 const index = (currentPlayerIndex + i) % players.length;
                 arrangedPlayers.push(players[index]);
             }
-            
+
             // Display players
             for (let i = 0; i < arrangedPlayers.length; i++) {
                 const player = arrangedPlayers[i];
                 const isCurrentPlayer = player.id === playerId;
                 const isActive = player.id === gameState.currentTurn;
-                
+
                 const html = `
                     <div class="player-card ${isActive ? 'active-player' : ''}">
                         <div class="player-info">
@@ -526,16 +526,16 @@
                         <div class="player-cards">
                             ${getPlayerCards(player, isCurrentPlayer)}
                         </div>
-                        ${player.bet > 0 ? `<div class="player-bet">${formatNumber(player.bet)}</div>` : ''}
-                        ${player.lastAction ? `<div class="player-action">${player.lastAction}</div>` : ''}
-                        ${player.isDealer ? `<div class="dealer-button">D</div>` : ''}
+                        ${player.bet > 0 ? '<div class="player-bet">' + formatNumber(player.bet) + '</div>' : ''}
+                        ${player.lastAction ? '<div class="player-action">' + player.lastAction + '</div>' : ''}
+                        ${player.isDealer ? '<div class="dealer-button">D</div>' : ''}
                     </div>
                 `;
-                
+
                 $('#position-' + i).html(html);
             }
         }
-        
+
         function getPlayerCards(player, isCurrentPlayer) {
             if (!player.cards || player.cards.length === 0) {
                 return `
@@ -543,40 +543,40 @@
                     <div class="card hidden">?</div>
                 `;
             }
-            
+
             if (!isCurrentPlayer && !gameState.showdown) {
                 return `
                     <div class="card hidden">?</div>
                     <div class="card hidden">?</div>
                 `;
             }
-            
+
             return player.cards.map(card => {
                 const isRed = card.suit === 'HEARTS' || card.suit === 'DIAMONDS';
                 return `<div class="card ${isRed ? 'red' : ''}">${getCardText(card)}</div>`;
             }).join('');
         }
-        
+
         function updateActionPanel(state) {
             const isPlayerTurn = state.currentTurn === playerId;
             const playerState = state.players.find(p => p.id === playerId);
-            
+
             if (!isPlayerTurn || !playerState || state.showdown) {
                 $('#actionPanel').hide();
                 return;
             }
-            
+
             $('#actionPanel').show();
-            
+
             // Update call amount
             const callAmount = state.currentBet - playerState.bet;
             $('#callAmount').text(callAmount);
-            
+
             // Enable/disable buttons based on game state
             $('#checkBtn').prop('disabled', callAmount > 0);
             $('#callBtn').prop('disabled', callAmount === 0);
             $('#raiseBtn').prop('disabled', playerState.chips <= callAmount);
-            
+
             // Update bet slider
             if (playerState.chips > callAmount) {
                 const minRaise = Math.max(state.bigBlind, callAmount * 2);
@@ -587,10 +587,10 @@
                 $('#betAmount').text(minRaise);
             }
         }
-        
+
         function updateTimer(timeRemaining) {
             clearInterval(timerInterval);
-            
+
             const updateTimerDisplay = () => {
                 const minutes = Math.floor(timeRemaining / 60);
                 const seconds = timeRemaining % 60;
@@ -598,28 +598,28 @@
                     String(minutes).padStart(2, '0') + ':' + 
                     String(seconds).padStart(2, '0')
                 );
-                
+
                 if (timeRemaining <= 10) {
                     $('#timer').addClass('text-danger');
                 } else {
                     $('#timer').removeClass('text-danger');
                 }
-                
+
                 timeRemaining--;
-                
+
                 if (timeRemaining < 0) {
                     clearInterval(timerInterval);
                 }
             };
-            
+
             updateTimerDisplay();
             timerInterval = setInterval(updateTimerDisplay, 1000);
         }
-        
+
         function updateBetAmount() {
             $('#betAmount').text($(this).val());
         }
-        
+
         function sendGameAction(action, amount = 0) {
             stompClient.send('/app/game.action', {}, JSON.stringify({
                 sessionId: sessionId,
@@ -627,19 +627,19 @@
                 amount: amount
             }));
         }
-        
+
         function sendChatMessage() {
             const message = $('#chatInput').val().trim();
             if (!message) return;
-            
+
             stompClient.send('/app/chat.message', {}, JSON.stringify({
                 roomId: sessionId,
                 content: message
             }));
-            
+
             $('#chatInput').val('');
         }
-        
+
         function displayChatMessage(message) {
             const isCurrentUser = message.sender === userData.username;
             const html = `
@@ -648,16 +648,16 @@
                     <div>${message.content}</div>
                 </div>
             `;
-            
+
             $('#chatMessages').append(html);
             $('#chatMessages').scrollTop($('#chatMessages')[0].scrollHeight);
         }
-        
+
         function leaveGame(confirm = true) {
             if (confirm && !window.confirm('Are you sure you want to leave the game?')) {
                 return;
             }
-            
+
             $.ajax({
                 url: '/api/games/leave',
                 type: 'POST',
@@ -677,7 +677,7 @@
                 }
             });
         }
-        
+
         function getCardText(card) {
             const ranks = {
                 'TWO': '2',
@@ -694,17 +694,17 @@
                 'KING': 'K',
                 'ACE': 'A'
             };
-            
+
             const suits = {
                 'SPADES': '♠',
                 'HEARTS': '♥',
                 'DIAMONDS': '♦',
                 'CLUBS': '♣'
             };
-            
+
             return ranks[card.rank] + suits[card.suit];
         }
-        
+
         function formatNumber(number) {
             return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
