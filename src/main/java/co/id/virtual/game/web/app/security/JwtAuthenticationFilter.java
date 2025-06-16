@@ -19,37 +19,39 @@ import java.io.IOException;
  * This filter intercepts all requests and validates the JWT token if present.
  */
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    
+
     @Autowired
     private JwtUtil jwtUtil;
-    
+
     @Autowired
     private CustomUserDetailsService userDetailsService;
-    
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        
+
         try {
             String jwt = getJwtFromRequest(request);
-            
-            if (StringUtils.hasText(jwt) && jwtUtil.validateToken(jwt, null)) {
+
+            if (StringUtils.hasText(jwt)) {
                 String username = jwtUtil.getUsernameFromToken(jwt);
-                
+
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                if (jwtUtil.validateToken(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             }
         } catch (Exception ex) {
             logger.error("Could not set user authentication in security context", ex);
         }
-        
+
         filterChain.doFilter(request, response);
     }
-    
+
     /**
      * Extract JWT token from request.
      *
