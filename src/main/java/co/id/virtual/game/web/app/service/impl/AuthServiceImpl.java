@@ -10,6 +10,8 @@ import co.id.virtual.game.web.app.security.CustomUserDetailsService;
 import co.id.virtual.game.web.app.security.JwtUtil;
 import co.id.virtual.game.web.app.security.UserPrincipal;
 import co.id.virtual.game.web.app.service.AuthService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -26,6 +29,8 @@ import java.util.UUID;
  */
 @Service
 public class AuthServiceImpl implements AuthService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -174,11 +179,18 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public void logout(UUID userId) {
-        // In a stateless JWT-based authentication system, there's no server-side logout
-        // The client should simply remove the tokens from storage
+    public void logout(UUID userId, String accessToken, String refreshToken) {
+        // Blacklist the access token
+        if (accessToken != null && !accessToken.isEmpty()) {
+            jwtUtil.blacklistToken(accessToken);
+        }
 
-        // However, we can update the user's last login time for tracking purposes
+        // Blacklist the refresh token
+        if (refreshToken != null && !refreshToken.isEmpty()) {
+            jwtUtil.blacklistToken(refreshToken);
+        }
+
+        // Update the user's last login time for tracking purposes
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
 
@@ -202,6 +214,39 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found with username: " + username));
 
         return user.getId();
+    }
+
+    @Override
+    @Transactional
+    public int revokeAllUserTokens(UUID userId) {
+        logger.info("Revoking all tokens for user with ID: {}", userId);
+
+        // Verify the user exists
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+
+        // Blacklist all tokens for the user
+        int count = jwtUtil.blacklistAllUserTokens(userId);
+
+        // Update the user's last login time for tracking purposes
+        user.setLastLogin(LocalDateTime.now());
+        userRepository.save(user);
+
+        logger.info("Revoked {} tokens for user with ID: {}", count, userId);
+        return count;
+    }
+
+    @Override
+    public List<String> getBlacklistedTokensForUser(UUID userId) {
+        logger.debug("Getting blacklisted tokens for user with ID: {}", userId);
+
+        // Verify the user exists
+        if (!userRepository.existsById(userId)) {
+            throw new IllegalArgumentException("User not found with ID: " + userId);
+        }
+
+        // Get all blacklisted tokens for the user
+        return jwtUtil.getBlacklistedTokensForUser(userId);
     }
 
     /**

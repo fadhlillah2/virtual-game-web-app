@@ -1,0 +1,90 @@
+# Prometheus alerting rules for Virtual Game Web App
+
+groups:
+  - name: application_alerts
+    rules:
+      # High CPU usage alert
+      - alert: HighCpuUsage
+        expr: process_cpu_usage > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% for 5 minutes on {{ $labels.instance }}"
+
+      # High memory usage alert
+      - alert: HighMemoryUsage
+        expr: sum(jvm_memory_used_bytes) / sum(jvm_memory_max_bytes) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is above 85% for 5 minutes on {{ $labels.instance }}"
+
+      # API endpoint high latency
+      - alert: ApiHighLatency
+        expr: http_server_requests_seconds_max{uri!~".*actuator.*"} > 2
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API endpoint high latency"
+          description: "Endpoint {{ $labels.uri }} has a response time above 2 seconds for 2 minutes"
+
+      # High error rate
+      - alert: HighErrorRate
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) / sum(rate(http_server_requests_seconds_count[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is above 5% for 2 minutes"
+
+  - name: database_alerts
+    rules:
+      # PostgreSQL connection pool saturation
+      - alert: PostgresConnectionPoolSaturation
+        expr: hikaricp_connections_active / hikaricp_connections_max > 0.8
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection pool near capacity"
+          description: "Connection pool is over 80% utilized for 2 minutes"
+
+      # PostgreSQL high query time
+      - alert: PostgresSlowQueries
+        expr: hikaricp_connections_creation_seconds_max > 1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow database connection creation"
+          description: "Database connection creation taking over 1 second"
+
+  - name: redis_alerts
+    rules:
+      # Redis memory usage
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis high memory usage"
+          description: "Redis memory usage is above 80% for 5 minutes"
+
+  - name: kafka_alerts
+    rules:
+      # Kafka under-replicated partitions
+      - alert: KafkaUnderReplicatedPartitions
+        expr: kafka_server_replicamanager_underreplicatedpartitions > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka under-replicated partitions"
+          description: "Kafka has under-replicated partitions for more than 10 minutes"

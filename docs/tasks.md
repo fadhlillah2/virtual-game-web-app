@@ -4,23 +4,23 @@ This document contains a prioritized list of tasks for improving the Virtual Gam
 
 ## Architecture and Infrastructure
 
-1. [ ] Implement environment-specific configuration profiles (dev, test, prod)
-2. [ ] Set up Docker Compose for local development environment
-3. [ ] Implement CI/CD pipeline with GitHub Actions or Jenkins
-4. [ ] Add infrastructure as code (Terraform/CloudFormation) for deployment
-5. [ ] Implement database connection pooling optimization
-6. [ ] Set up monitoring and alerting with Prometheus and Grafana
-7. [ ] Implement distributed tracing with Spring Cloud Sleuth and Zipkin
-8. [ ] Create architecture decision records (ADRs) for major technical decisions
+1. [x] Implement environment-specific configuration profiles (dev, test, prod)
+2. [x] Set up Docker Compose for local development environment
+3. [x] Implement CI/CD pipeline with GitHub Actions or Jenkins
+4. [x] Add infrastructure as code (Terraform/CloudFormation) for deployment
+5. [x] Implement database connection pooling optimization
+6. [x] Set up monitoring and alerting with Prometheus and Grafana
+7. [x] Implement distributed tracing with Spring Cloud Sleuth and Zipkin
+8. [x] Create architecture decision records (ADRs) for major technical decisions
 
 ## Security Enhancements
 
-9. [ ] Move JWT secret to environment variables or secure vault
-10. [ ] Implement token blacklisting/revocation mechanism
-11. [ ] Add rate limiting for authentication endpoints
-12. [ ] Implement CSRF protection for form submissions
-13. [ ] Add security headers (Content-Security-Policy, X-Content-Type-Options)
-14. [ ] Implement IP-based rate limiting for sensitive operations
+9. [x] Move JWT secret to environment variables or secure vault
+10. [x] Implement token blacklisting/revocation mechanism
+11. [x] Add rate limiting for authentication endpoints
+12. [x] Implement CSRF protection for form submissions
+13. [x] Add security headers (Content-Security-Policy, X-Content-Type-Options)
+14. [x] Implement IP-based rate limiting for sensitive operations
 15. [ ] Add two-factor authentication option for users
 16. [ ] Conduct security audit and penetration testing
 17. [ ] Implement secure password reset flow

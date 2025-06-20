@@ -1,0 +1,35 @@
+# Grafana notification channels configuration
+
+apiVersion: 1
+
+notifiers:
+  - name: Email Alerts
+    type: email
+    uid: email_alerts
+    org_id: 1
+    is_default: true
+    settings:
+      addresses: alerts@virtualgame.example.com
+      singleEmail: false
+
+  - name: Slack Alerts
+    type: slack
+    uid: slack_alerts
+    org_id: 1
+    is_default: false
+    settings:
+      url: https://hooks.slack.com/services/EXAMPLE/WEBHOOK/URL
+      recipient: "#alerts"
+      mentionChannel: "here"
+      username: "Grafana Alerts"
+      iconEmoji: ":warning:"
+
+  - name: PagerDuty Alerts
+    type: pagerduty
+    uid: pagerduty_alerts
+    org_id: 1
+    is_default: false
+    settings:
+      integrationKey: EXAMPLE_PAGERDUTY_INTEGRATION_KEY
+      severity: critical
+      autoResolve: true

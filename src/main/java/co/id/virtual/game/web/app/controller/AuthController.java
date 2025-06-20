@@ -12,20 +12,22 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * Controller for handling authentication operations.
  */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-    
+
     private final AuthService authService;
-    
+
     @Autowired
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
-    
+
     /**
      * Register a new user.
      *
@@ -41,7 +43,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
-    
+
     /**
      * Authenticate a user.
      *
@@ -57,7 +59,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
-    
+
     /**
      * Refresh an authentication token.
      *
@@ -73,19 +75,30 @@ public class AuthController {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
-    
+
     /**
      * Logout a user.
      *
      * @param userPrincipal the authenticated user
+     * @param authorizationHeader the Authorization header containing the access token
+     * @param refreshToken the refresh token to blacklist
      * @return a success response
      */
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(@AuthenticationPrincipal UserPrincipal userPrincipal) {
-        authService.logout(userPrincipal.getId());
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+            @RequestParam(value = "refreshToken", required = false) String refreshToken) {
+
+        String accessToken = null;
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            accessToken = authorizationHeader.substring(7);
+        }
+
+        authService.logout(userPrincipal.getId(), accessToken, refreshToken);
         return ResponseEntity.ok(ApiResponse.success("User logged out successfully"));
     }
-    
+
     /**
      * Validate a token.
      *
@@ -99,6 +112,43 @@ public class AuthController {
             return ResponseEntity.ok(ApiResponse.success("Token is valid", true));
         } else {
             return ResponseEntity.badRequest().body(ApiResponse.error("Token is invalid", false));
+        }
+    }
+
+    /**
+     * Revoke all tokens for a user.
+     * This is useful for security purposes, such as when a user changes their password
+     * or when suspicious activity is detected.
+     *
+     * @param userPrincipal the authenticated user
+     * @return a success response with the number of tokens revoked
+     */
+    @PostMapping("/revoke-all")
+    public ResponseEntity<ApiResponse<Integer>> revokeAllTokens(
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        try {
+            int count = authService.revokeAllUserTokens(userPrincipal.getId());
+            return ResponseEntity.ok(ApiResponse.success("Revoked " + count + " tokens for user", count));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
+     * Get all blacklisted tokens for a user.
+     * This is mainly for administrative purposes.
+     *
+     * @param userPrincipal the authenticated user
+     * @return a success response with the list of blacklisted tokens
+     */
+    @GetMapping("/blacklisted-tokens")
+    public ResponseEntity<ApiResponse<List<String>>> getBlacklistedTokens(
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        try {
+            List<String> tokens = authService.getBlacklistedTokensForUser(userPrincipal.getId());
+            return ResponseEntity.ok(ApiResponse.success("Retrieved " + tokens.size() + " blacklisted tokens", tokens));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 }

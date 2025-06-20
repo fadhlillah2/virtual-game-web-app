@@ -1,0 +1,153 @@
+# Grafana alert rules configuration
+
+apiVersion: 1
+
+groups:
+  - name: Application Alerts
+    folder: Alerts
+    interval: 60s
+    rules:
+      - name: High CPU Usage
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: process_cpu_usage > 0.8
+              intervalMs: 1000
+              maxDataPoints: 43200
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: High CPU usage detected
+          description: CPU usage is above 80% for 5 minutes
+        labels:
+          severity: warning
+        isPaused: false
+
+      - name: High Memory Usage
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: sum(jvm_memory_used_bytes) / sum(jvm_memory_max_bytes) > 0.85
+              intervalMs: 1000
+              maxDataPoints: 43200
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: High memory usage detected
+          description: Memory usage is above 85% for 5 minutes
+        labels:
+          severity: warning
+        isPaused: false
+
+      - name: API High Latency
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: http_server_requests_seconds_max{uri!~".*actuator.*"} > 2
+              intervalMs: 1000
+              maxDataPoints: 43200
+        noDataState: NoData
+        execErrState: Error
+        for: 2m
+        annotations:
+          summary: API endpoint high latency
+          description: Endpoint has a response time above 2 seconds for 2 minutes
+        labels:
+          severity: warning
+        isPaused: false
+
+  - name: Database Alerts
+    folder: Alerts
+    interval: 60s
+    rules:
+      - name: Database Connection Pool Saturation
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: hikaricp_connections_active / hikaricp_connections_max > 0.8
+              intervalMs: 1000
+              maxDataPoints: 43200
+        noDataState: NoData
+        execErrState: Error
+        for: 2m
+        annotations:
+          summary: Database connection pool near capacity
+          description: Connection pool is over 80% utilized for 2 minutes
+        labels:
+          severity: warning
+        isPaused: false
+
+      - name: Slow Database Connections
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: hikaricp_connections_creation_seconds_max > 1
+              intervalMs: 1000
+              maxDataPoints: 43200
+        noDataState: NoData
+        execErrState: Error
+        for: 2m
+        annotations:
+          summary: Slow database connection creation
+          description: Database connection creation taking over 1 second
+        labels:
+          severity: warning
+        isPaused: false
+
+  - name: Redis Alerts
+    folder: Alerts
+    interval: 60s
+    rules:
+      - name: Redis High Memory Usage
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+              intervalMs: 1000
+              maxDataPoints: 43200
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: Redis high memory usage
+          description: Redis memory usage is above 80% for 5 minutes
+        labels:
+          severity: warning
+        isPaused: false
+
+  - name: Kafka Alerts
+    folder: Alerts
+    interval: 60s
+    rules:
+      - name: Kafka Under-replicated Partitions
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: kafka_server_replicamanager_underreplicatedpartitions > 0
+              intervalMs: 1000
+              maxDataPoints: 43200
+        noDataState: NoData
+        execErrState: Error
+        for: 10m
+        annotations:
+          summary: Kafka under-replicated partitions
+          description: Kafka has under-replicated partitions for more than 10 minutes
+        labels:
+          severity: warning
+        isPaused: false

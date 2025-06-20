@@ -1,5 +1,6 @@
 package co.id.virtual.game.web.app.config;
 
+import co.id.virtual.game.web.app.filter.RateLimitingFilter;
 import co.id.virtual.game.web.app.security.CustomUserDetailsService;
 import co.id.virtual.game.web.app.security.JwtAuthenticationEntryPoint;
 import co.id.virtual.game.web.app.security.JwtAuthenticationFilter;
@@ -17,6 +18,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 
 /**
  * Security configuration for the application.
@@ -31,6 +33,9 @@ public class SecurityConfig {
 
     @Autowired
     private JwtAuthenticationEntryPoint unauthorizedHandler;
+
+    @Autowired
+    private RateLimitingFilter rateLimitingFilter;
 
     /**
      * JWT authentication filter bean.
@@ -87,7 +92,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/api/auth/**", "/api/public/**", "/ws/**")
+                .csrfTokenRepository(new org.springframework.security.web.csrf.CookieCsrfTokenRepository())
+            )
             .cors(cors -> {})
             .exceptionHandling(exceptionHandling -> 
                 exceptionHandling.authenticationEntryPoint(unauthorizedHandler)
@@ -111,10 +119,16 @@ public class SecurityConfig {
                     .maxAgeInSeconds(31536000)
                     .includeSubDomains(true)
                 )
+                .contentSecurityPolicy(csp -> csp
+                    .policyDirectives("default-src 'self'; script-src 'self'; img-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; form-action 'self'")
+                )
+                .xssProtection(xss -> {})
+                .referrerPolicy(referrer -> referrer.policy(ReferrerPolicy.SAME_ORIGIN))
             );
 
-        // Add JWT authentication filter
+        // Add rate limiting filter and JWT authentication filter
         http.authenticationProvider(authenticationProvider());
+        http.addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
