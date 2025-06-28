@@ -2,105 +2,141 @@
 
 This document contains a prioritized list of tasks for improving the Virtual Game Web App. Each task is marked with a checkbox that can be checked off when completed.
 
-## Architecture and Infrastructure
+## CRITICAL SECURITY FIXES (Immediate Priority)
 
-1. [x] Implement environment-specific configuration profiles (dev, test, prod)
-2. [x] Set up Docker Compose for local development environment
-3. [x] Implement CI/CD pipeline with GitHub Actions or Jenkins
-4. [x] Add infrastructure as code (Terraform/CloudFormation) for deployment
-5. [x] Implement database connection pooling optimization
-6. [x] Set up monitoring and alerting with Prometheus and Grafana
-7. [x] Implement distributed tracing with Spring Cloud Sleuth and Zipkin
-8. [x] Create architecture decision records (ADRs) for major technical decisions
+1. [ ] **Fix CSRF Protection Configuration** - Remove CSRF exemptions for authentication endpoints in `SecurityConfig.java:95-97`
+2. [ ] **Secure WebSocket CORS Settings** - Replace `setAllowedOriginPatterns("*")` with specific domains in `WebSocketConfig.java:40`
+3. [ ] **Remove Hardcoded JWT Secret** - Eliminate fallback secret in `application-dev.properties:57`
+4. [ ] **Add WebSocket Input Validation** - Implement validation on `ChatMessage` and `GameActionMessage` DTOs
+5. [ ] **Fix Information Disclosure** - Set error inclusion to `never` in production properties
+6. [ ] **Implement Missing Service** - Create `TournamentServiceImpl` implementation for existing interface
 
-## Security Enhancements
+## HIGH PRIORITY ARCHITECTURAL FIXES
 
-9. [x] Move JWT secret to environment variables or secure vault
-10. [x] Implement token blacklisting/revocation mechanism
-11. [x] Add rate limiting for authentication endpoints
-12. [x] Implement CSRF protection for form submissions
-13. [x] Add security headers (Content-Security-Policy, X-Content-Type-Options)
-14. [x] Implement IP-based rate limiting for sensitive operations
-15. [ ] Add two-factor authentication option for users
-16. [ ] Conduct security audit and penetration testing
-17. [ ] Implement secure password reset flow
+7. [ ] **Fix Token Blacklist Validation** - Ensure `AuthServiceImpl.validateToken()` checks blacklist consistently
+8. [ ] **Resolve N+1 Query Problems** - Implement batch fetching in `GameSessionServiceImpl:308-313`
+9. [ ] **Add Transaction Isolation** - Implement proper isolation levels for chip balance operations in `ChipServiceImpl`
+10. [ ] **Fix Circular Dependency Risk** - Decouple `GameSessionService` from `ChipService` by introducing `WalletService`
+11. [ ] **Implement Event Processing Logic** - Complete empty event handlers in `GameEventListener.java:75-120`
+12. [ ] **Add Optimistic Locking** - Implement `@Version` fields on critical entities for thread safety
 
-## Performance Optimization
+## CODE QUALITY IMPROVEMENTS
 
-18. [ ] Add Redis caching for frequently accessed data (user profiles, game states)
-19. [ ] Optimize database queries with proper indexing
-20. [ ] Implement pagination for all list endpoints
-21. [ ] Add database query result caching
-22. [ ] Optimize WebSocket message handling for high concurrency
-23. [ ] Implement connection pooling for Redis
-24. [ ] Add response compression for API responses
-25. [ ] Optimize frontend assets (minification, bundling)
-26. [ ] Implement lazy loading for JSP fragments
+13. [ ] **Extract Configuration Values** - Move hardcoded values from `ChipServiceImpl:41-42` to properties
+14. [ ] **Refactor Complex Methods** - Break down `GameSessionServiceImpl.processGameAction()` (64 lines)
+15. [ ] **Add Input Validation** - Implement JSR-303 validation on all DTOs
+16. [ ] **Fix Resource Management** - Add proper connection pooling configuration for PostgreSQL
+17. [ ] **Implement Global Exception Handling** - Extend `GlobalExceptionHandler` to cover all exception types
+18. [ ] **Add Rate Limiting Enhancement** - Implement user-based rate limiting for authenticated endpoints
+19. [ ] **Fix Memory Management** - Add size limits to `SessionData.actionHistory` and cleanup mechanisms
+20. [ ] **Remove Debug Code** - Replace `System.err.println()` with proper logging in `GameSessionServiceImpl:265`
 
-## Code Quality and Testing
+## TESTING INFRASTRUCTURE
 
-27. [ ] Add JaCoCo for code coverage reporting
-28. [ ] Increase unit test coverage to at least 80%
-29. [ ] Add integration tests for all REST endpoints
-30. [ ] Implement end-to-end tests with Selenium or Cypress
-31. [ ] Add load testing with JMeter or Gatling
-32. [ ] Set up SonarQube for code quality analysis
-33. [ ] Implement mutation testing with PIT
-34. [ ] Add API contract testing with Spring Cloud Contract
-35. [ ] Implement property-based testing for critical components
+21. [ ] **Add JaCoCo Code Coverage** - Enable commented JaCoCo plugin in `pom.xml:238`
+22. [ ] **Create Integration Tests** - Add `@SpringBootTest` tests for end-to-end scenarios
+23. [ ] **Implement Repository Tests** - Add `@DataJpaTest` for all repository interfaces
+24. [ ] **Add Testcontainers Integration** - Create tests with real PostgreSQL and Redis instances
+25. [ ] **Test Critical Controllers** - Add tests for `GameController`, `GameSessionController`, `GameWebSocketController`
+26. [ ] **Create Event System Tests** - Test `GameEventListener` and `GameEventPublisher` functionality
+27. [ ] **Add WebSocket Tests** - Implement integration tests for real-time game functionality
+28. [ ] **Remove Test Anti-patterns** - Clean up debug logging and excessive lenient mocking in tests
 
-## Feature Improvements
+## PERFORMANCE OPTIMIZATIONS
 
-36. [ ] Complete the implementation of consecutive days tracking for daily bonuses
-37. [ ] Make daily gift limits configurable rather than hardcoded
-38. [ ] Add leaderboard functionality based on chip balances
-39. [ ] Implement friend invitation system
-40. [ ] Add achievement system for player engagement
-41. [ ] Implement tournament functionality
-42. [ ] Add chat moderation features
-43. [ ] Implement player statistics dashboard
-44. [ ] Add social sharing functionality
+29. [ ] **Implement Cache Integration** - Connect `GameSessionCacheService` with `GameSessionServiceImpl`
+30. [ ] **Add Database Indexes** - Create indexes for frequently queried fields
+31. [ ] **Optimize JPA Queries** - Add `@EntityGraph` annotations for optimized loading
+32. [ ] **Configure Redis Clustering** - Implement Redis cluster for scalability
+33. [ ] **Add Connection Pool Limits** - Configure HikariCP and Redis connection pools
+34. [ ] **Implement Batch Operations** - Replace individual database calls with batch operations
+35. [ ] **Add Session Cleanup** - Implement automated cleanup for abandoned game sessions
+36. [ ] **Optimize WebSocket Handling** - Add connection limits and resource management
 
-## Documentation
+## SECURITY ENHANCEMENTS
 
-45. [ ] Create comprehensive API documentation with SpringDoc OpenAPI
-46. [ ] Add Javadoc comments for all public methods
-47. [ ] Create developer onboarding guide
-48. [ ] Document database schema and relationships
-49. [ ] Create user manual for the application
-50. [ ] Add inline code comments for complex logic
-51. [ ] Document WebSocket message formats
-52. [ ] Create deployment and operations guide
+37. [ ] **Implement JWT Rotation** - Add token rotation on password changes and sensitive actions
+38. [ ] **Add Device Fingerprinting** - Enhance JWT security with device binding
+39. [ ] **Implement Content Sanitization** - Add XSS protection for chat messages and user input
+40. [ ] **Add Audit Logging** - Implement comprehensive audit trail for financial transactions
+41. [ ] **Enhance Password Validation** - Add complexity requirements and strength checking
+42. [ ] **Implement IP Allowlisting** - Restrict management endpoints to trusted IPs
+43. [ ] **Add Security Headers for WebSocket** - Implement additional WebSocket security measures
+44. [ ] **Create Security Integration Tests** - Add tests for authentication and authorization
 
-## Error Handling and Logging
+## ARCHITECTURE IMPROVEMENTS
 
-53. [ ] Implement global exception handling with @ControllerAdvice
-54. [ ] Add structured logging with JSON format
-55. [ ] Implement correlation IDs for request tracing
-56. [ ] Add more specific exception types for different error scenarios
-57. [ ] Improve error messages for better user experience
-58. [ ] Implement circuit breaker pattern for external service calls
-59. [ ] Add health check endpoints for all services
-60. [ ] Implement graceful degradation for non-critical features
+45. [ ] **Implement Domain-Driven Design** - Extract game logic into proper domain services
+46. [ ] **Add Service Layer Interfaces** - Ensure all service implementations have proper interfaces
+47. [ ] **Implement Repository Abstractions** - Fix type safety issues in `BlacklistedTokenRepository`
+48. [ ] **Add Configuration Validation** - Validate configuration properties at startup
+49. [ ] **Implement Retry Mechanisms** - Add retry logic for Redis and external service failures
+50. [ ] **Create Business Logic Layer** - Separate business rules from service implementations
+51. [ ] **Add Event Sourcing** - Consider event sourcing for game actions and financial transactions
+52. [ ] **Implement CQRS Pattern** - Separate read and write models for better scalability
 
-## Refactoring and Technical Debt
+## MONITORING AND OBSERVABILITY
 
-61. [ ] Refactor JwtUtil to use a key that's loaded once at startup
-62. [ ] Extract hardcoded constants to configuration properties
-63. [ ] Refactor ChipServiceImpl to reduce method complexity
-64. [ ] Implement the Domain-Driven Design pattern for core game logic
-65. [ ] Migrate from JSP to a modern frontend framework (React, Angular, or Vue)
-66. [ ] Refactor WebSocket handling to use STOMP subprotocol consistently
-67. [ ] Implement proper DTO validation with custom validators
-68. [ ] Refactor repository methods to use query methods or JPQL
+53. [ ] **Add Health Checks** - Implement comprehensive health check endpoints
+54. [ ] **Enhance Logging Structure** - Implement structured JSON logging with correlation IDs
+55. [ ] **Add Performance Metrics** - Create custom metrics for business operations
+56. [ ] **Implement Alert Rules** - Add alerting for critical business and technical metrics
+57. [ ] **Add Distributed Tracing** - Complete Zipkin integration for request tracing
+58. [ ] **Create Business Dashboards** - Add Grafana dashboards for game and financial metrics
+59. [ ] **Implement Log Analysis** - Add log analysis for security and performance monitoring
+60. [ ] **Add Error Tracking** - Implement error tracking and reporting system
 
-## DevOps and Maintenance
+## DOCUMENTATION AND MAINTENANCE
 
-69. [ ] Set up automated dependency updates with Dependabot
-70. [ ] Implement database backup and restore procedures
-71. [ ] Add database migration testing in CI pipeline
-72. [ ] Create runbooks for common operational tasks
-73. [ ] Implement feature flags for gradual rollout
-74. [ ] Set up log aggregation with ELK stack
-75. [ ] Implement blue-green deployment strategy
-76. [ ] Create disaster recovery plan and procedures
+61. [ ] **Complete API Documentation** - Add comprehensive Swagger/OpenAPI documentation
+62. [ ] **Create Developer Guides** - Add setup, deployment, and troubleshooting guides
+63. [ ] **Document Security Practices** - Create security guidelines and best practices
+64. [ ] **Add Database Documentation** - Document schema, relationships, and migration practices
+65. [ ] **Create Runbooks** - Add operational procedures for common tasks
+66. [ ] **Document Testing Strategy** - Create testing guidelines and standards
+67. [ ] **Add Code Style Guide** - Establish and document coding standards
+68. [ ] **Create Disaster Recovery Plan** - Document backup and recovery procedures
+
+## FEATURE COMPLETIONS
+
+69. [ ] **Complete Tournament System** - Implement full tournament functionality
+70. [ ] **Add Friend Management** - Complete friend invitation and management features
+71. [ ] **Implement Achievement System** - Add player achievements and rewards
+72. [ ] **Complete Chat Moderation** - Add chat filtering and moderation tools
+73. [ ] **Add Player Analytics** - Implement comprehensive player statistics
+74. [ ] **Complete Game History** - Add detailed game history and replay functionality
+75. [ ] **Implement Social Features** - Add sharing and social interaction features
+76. [ ] **Add Mobile Support** - Ensure mobile compatibility and responsive design
+
+## TECHNICAL DEBT REDUCTION
+
+77. [ ] **Migrate from JSP** - Consider migration to modern frontend framework
+78. [ ] **Update Dependencies** - Review and update all Maven dependencies
+79. [ ] **Refactor Long Methods** - Break down methods exceeding 50 lines
+80. [ ] **Remove TODO Comments** - Complete or remove all TODO items in code
+81. [ ] **Standardize Naming** - Ensure consistent naming conventions across codebase
+82. [ ] **Add Missing Javadoc** - Document all public APIs with proper Javadoc
+83. [ ] **Remove Dead Code** - Eliminate unused imports, methods, and classes
+84. [ ] **Implement DTO Immutability** - Make DTOs immutable for thread safety
+
+## DEPLOYMENT AND DEVOPS
+
+85. [ ] **Implement Blue-Green Deployment** - Add zero-downtime deployment strategy
+86. [ ] **Add Database Migration Testing** - Test migrations in CI/CD pipeline
+87. [ ] **Create Environment Parity** - Ensure development/production environment consistency
+88. [ ] **Implement Feature Flags** - Add feature toggle capability
+89. [ ] **Add Backup Automation** - Implement automated backup and restore procedures
+90. [ ] **Create Rollback Procedures** - Document and automate rollback processes
+91. [ ] **Implement Load Balancing** - Add load balancer configuration for scalability
+92. [ ] **Add Container Orchestration** - Consider Kubernetes for production deployment
+
+---
+
+**Priority Legend:**
+- **CRITICAL** (1-6): Security vulnerabilities requiring immediate attention
+- **HIGH** (7-12): Architectural issues affecting system stability
+- **MEDIUM** (13-52): Important improvements for maintainability and performance
+- **LOW** (53-92): Long-term enhancements and technical debt reduction
+
+**Estimated Total Tasks:** 92
+**Estimated Effort:** 6-12 months for complete implementation

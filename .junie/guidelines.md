@@ -1,117 +1,81 @@
-# Virtual Game Web App - Developer Guidelines
+# Virtual Game Web App Development Guidelines
 
-This document provides essential information for developers working on the Virtual Game Web App project. It covers build configuration, testing, and development guidelines specific to this project.
-
-## Build and Configuration
+## Build & Configuration
 
 ### Prerequisites
+- Java 21 JDK
+- Maven 3.9+
+- PostgreSQL 15.13
+- Redis 8.0
+- Kafka 3.6
 
-- Java 21 (required as specified in pom.xml)
-- Maven 3.8+ (for build management)
-- PostgreSQL 14+ (for database)
-- Redis (for caching and session management)
-- Kafka (for event messaging)
-
-### Database Setup
-
-1. Create a PostgreSQL database named `virtual_casino`:
-   ```sql
-   CREATE DATABASE virtual_casino;
-   ```
-
-2. Configure database credentials in `application.properties` or use environment variables:
-   ```properties
-   spring.datasource.url=jdbc:postgresql://localhost:5432/virtual_casino
-   spring.datasource.username=postgres
-   spring.datasource.password=postgres
-   ```
-
-3. Database migrations are handled by Flyway and will run automatically on application startup.
-
-### Redis Configuration
-
-Redis is used for caching and real-time game session management:
-
-```properties
-spring.data.redis.host=localhost
-spring.data.redis.port=6379
-```
-
-### Kafka Configuration
-
-Kafka is used for event messaging between components:
-
-```properties
-spring.kafka.bootstrap-servers=localhost:9092
-spring.kafka.consumer.group-id=virtual-casino-group
-```
-
-### Building the Application
-
+### Build Commands
 ```bash
-# Clean and build the application
-mvn clean install
+# Clean and compile
+mvn clean compile
 
-# Skip tests during build
-mvn clean install -DskipTests
+# Run tests
+mvn test
 
-# Run the application
+# Build WAR package
+mvn clean package
+
+# Run application
 mvn spring-boot:run
 ```
 
-## Testing
+### Project Structure
+- **Java Version**: 21 with Spring Boot 3.2.0
+- **Packaging**: WAR deployment
+- **Architecture**: Layered architecture with Spring MVC, JPA, Security
+- **Database**: PostgreSQL with Flyway migrations
+- **Caching**: Redis with Redisson
+- **Messaging**: Kafka for event processing
+- **Monitoring**: Micrometer with Prometheus integration
 
-### Test Structure
+## Testing Framework & Guidelines
 
-The project uses JUnit 5 with Mockito for unit testing. Tests are organized by component type:
+### Testing Stack
+- **JUnit 5** for unit testing
+- **Mockito** for mocking
+- **Spring Boot Test** for integration testing
+- **Testcontainers** for external dependencies (PostgreSQL, Kafka)
 
-- `src/test/java/co/id/virtual/game/web/app/service/` - Service layer tests
-- `src/test/java/co/id/virtual/game/web/app/controller/` - Controller layer tests
-- `src/test/java/co/id/virtual/game/web/app/repository/` - Repository layer tests
+### Running Tests
+```bash
+# Run all tests
+mvn test
 
-### Unit Testing
+# Run specific test class
+mvn test -Dtest=ChipServiceTest
 
-Unit tests focus on testing individual components in isolation using mocks for dependencies.
+# Run with coverage (when configured)
+mvn test jacoco:report
+```
 
-Example of a service test using Mockito:
-
+### Test Example (Working)
+Unit test pattern for service layer:
 ```java
 @ExtendWith(MockitoExtension.class)
 public class ChipServiceTest {
-
     @Mock
     private UserRepository userRepository;
-
+    
     @Mock
     private TransactionRepository transactionRepository;
-
+    
     @InjectMocks
     private ChipServiceImpl chipService;
-
-    private User testUser;
-    private UUID userId;
-
+    
     @BeforeEach
     void setUp() {
-        // Create test data and configure mocks
-        userId = UUID.randomUUID();
-        testUser = User.builder()
-                .id(userId)
-                .username("testuser")
-                .chipsBalance(1000L)
-                .build();
-                
         // Use lenient stubbing to avoid strict stubbing issues
-        Mockito.lenient().when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
-        
-        // Mock repository methods as needed
+        Mockito.lenient().when(userRepository.findById(any())).thenReturn(Optional.of(testUser));
+        // Mock all repository methods called in service
     }
-
+    
     @Test
-    void testServiceMethod() {
-        // Arrange
-        // Additional test-specific setup
-        
+    void getUserBalance_ShouldReturnCorrectBalance() {
         // Act
         ChipBalanceDto result = chipService.getUserBalance(userId);
         
@@ -122,127 +86,77 @@ public class ChipServiceTest {
 }
 ```
 
-### Integration Testing
+## Code Style & Development Patterns
 
-For integration tests, the project uses TestContainers to provide real database, Redis, and Kafka instances:
+### Code Conventions
+- **Lombok**: Extensive use of `@Data`, `@Builder`, `@Slf4j` annotations
+- **Package Structure**: Feature-based organization (controller, service, repository per domain)
+- **Naming**: CamelCase for classes, camelCase for methods/variables
+- **DTOs**: Separate DTOs for API requests/responses with validation
 
-```java
-@SpringBootTest
-@Testcontainers
-public class ChipServiceIntegrationTest {
+### Architecture Patterns
+- **Service Layer**: Interface-based services with implementation classes
+- **Repository Pattern**: Spring Data JPA repositories with custom queries
+- **Event-Driven**: Kafka events for cross-cutting concerns (chip transactions, game events)
+- **Caching**: Redis for session management and game state caching
+- **Security**: JWT-based authentication with Spring Security
 
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:14")
-            .withDatabaseName("test_db")
-            .withUsername("test")
-            .withPassword("test");
+### Key Configuration Classes
+- `SecurityConfig.java`: Security configuration with JWT filter
+- `WebSocketConfig.java`: WebSocket configuration for real-time features
+- `KafkaConfig.java`: Kafka producer/consumer configuration
+- `RedissonConfig.java`: Redis client configuration
 
-    @DynamicPropertySource
-    static void postgresProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-    }
-    
-    @Autowired
-    private ChipService chipService;
-    
-    @Autowired
-    private UserRepository userRepository;
-    
-    @Test
-    void testServiceWithRealDatabase() {
-        // Test using actual database
-    }
-}
-```
+### Entity Design
+- UUID primary keys for all entities
+- Audit fields with `@CreatedDate` and `@LastModifiedDate`
+- Builder pattern with Lombok for entity creation
+- JPA validation annotations for data integrity
 
-### Running Tests
+### Exception Handling
+- Global exception handler with `@ControllerAdvice`
+- Custom business exceptions (e.g., `InsufficientChipsException`)
+- Consistent API response format via `ApiResponse<T>` wrapper
 
+### Observability
+- Micrometer tracing with Zipkin integration
+- Prometheus metrics for monitoring
+- Structured logging with SLF4J
+
+## Development Commands
+
+### Database Management
 ```bash
-# Run all tests
-mvn test
+# Run Flyway migrations
+mvn flyway:migrate
 
-# Run a specific test class
-mvn test -Dtest=ChipServiceTest
+# Validate migrations
+mvn flyway:validate
 
-# Run a specific test method
-mvn test -Dtest=ChipServiceTest#getUserBalance_ShouldReturnCorrectBalance
+# Clean database (dev only)
+mvn flyway:clean
 ```
 
-### Adding New Tests
+### Docker Development
+```bash
+# Build and run with Docker Compose
+docker-compose up -d
 
-When adding new tests:
+# View logs
+docker-compose logs -f virtual-game-web-app
+```
 
-1. Follow the existing package structure
-2. Use descriptive test method names (e.g., `methodName_scenario_expectedResult`)
-3. Structure tests with Arrange-Act-Assert pattern
-4. For service tests, mock external dependencies
-5. For integration tests, use TestContainers for real dependencies
+### Common Issues
 
-## Development Guidelines
+1. **Compilation Warnings**: Lombok `@Builder` warnings about initializing expressions can be ignored or fixed by adding `@Builder.Default`
 
-### Code Style
+2. **Test Context Loading**: Integration tests may fail if external dependencies (Redis, PostgreSQL) are not running
 
-- Use Java 21 features where appropriate
-- Follow standard Java naming conventions
-- Use Lombok annotations to reduce boilerplate code
-- Document public APIs with Javadoc
+3. **JWT Configuration**: Ensure JWT secret is properly configured in application properties for different environments
 
-### Architecture
-
-The application follows a layered architecture:
-
-- **Controller Layer**: Handles HTTP requests and WebSocket messages
-- **Service Layer**: Contains business logic
-- **Repository Layer**: Handles data access
-- **Model Layer**: Defines domain entities
-- **DTO Layer**: Defines data transfer objects for API communication
-
-### Key Components
-
-- **Authentication**: JWT-based authentication with token refresh
-- **WebSockets**: Used for real-time game updates and chat
-- **Chip Management**: Virtual economy system with transactions
-- **Game Sessions**: Real-time game state management using Redis
-
-### Transaction Management
-
-When implementing features that modify chip balances:
-
-1. Always use the ChipService for chip operations
-2. Handle InsufficientChipsException appropriately
-3. Ensure transactions are properly recorded
-4. Use proper transaction types from TransactionType enum
-
-### WebSocket Communication
-
-For real-time features:
-
-1. Extend existing message types in the dto.websocket package
-2. Use the UserInterceptor for authentication
-3. Follow the existing pattern in GameWebSocketController
-
-### Error Handling
-
-- Use specific exception types for different error scenarios
-- Handle exceptions at the controller level with @ExceptionHandler
-- Return appropriate HTTP status codes and error messages
-
-## Debugging
-
-- Enable debug logging in application.properties:
-  ```properties
-  logging.level.co.id.virtual.game.web.app=DEBUG
-  ```
-
-- For SQL debugging:
-  ```properties
-  logging.level.org.hibernate.SQL=DEBUG
-  logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
-  ```
-
-- Add debug logs in tests:
-  ```java
-  System.out.println("[DEBUG_LOG] Your debug message");
-  ```
+### Security Considerations
+- Rate limiting configured via bucket4j
+- CSRF protection enabled
+- JWT token blacklisting for logout
+- Input validation on all API endpoints
+- SQL injection prevention via JPA parameterized queries
