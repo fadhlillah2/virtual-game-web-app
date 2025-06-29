@@ -2,16 +2,16 @@ package co.id.virtual.game.web.app.event;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
 
 /**
  * Service for publishing game events to Kafka topics.
  */
 @Service
 @Slf4j
+@ConditionalOnProperty(name = "kafka.enabled", havingValue = "true", matchIfMissing = false)
 public class GameEventPublisher {
     
     private final KafkaTemplate<String, Object> kafkaTemplate;

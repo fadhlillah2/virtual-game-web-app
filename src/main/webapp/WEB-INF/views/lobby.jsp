@@ -254,7 +254,7 @@
                             </div>
                             <div class="card-body text-center">
                                 <div class="game-icon">${icon}</div>
-                                <p>Min Bet: ${formatNumber(game.minBet)} chips</p>
+                                <p>Min Bet: <span class="min-bet">${game.minBet}</span> chips</p>
                                 <p>Max Players: ${game.maxPlayers}</p>
                                 <button class="btn btn-primary w-100" onclick="showJoinGameModal('${game.id}', '${game.name}', ${game.minBet})">
                                     Play Now
@@ -305,8 +305,8 @@
                                 <div class="d-flex justify-content-between mb-3">
                                     <div>${icon}</div>
                                     <div>
-                                        <p class="mb-0">Started: ${formatTime(session.startedAt)}</p>
-                                        <p class="mb-0">Pot: ${formatNumber(session.potSize)} chips</p>
+                                        <p class="mb-0">Started: <span class="start-time">${session.startedAt}</span></p>
+                                        <p class="mb-0">Pot: <span class="pot-size">${session.potSize}</span> chips</p>
                                     </div>
                                 </div>
                                 <button class="btn btn-primary w-100" onclick="joinSession('${session.id}', ${session.minBuyIn})">
