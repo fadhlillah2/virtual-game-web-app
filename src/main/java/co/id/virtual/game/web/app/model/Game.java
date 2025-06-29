@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Type;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -48,7 +47,7 @@ public class Game {
     @Column(name = "max_players")
     private Integer maxPlayers = 6;
     
-    @Type(JsonType.class)
+    @Convert(converter = JsonAttributeConverter.class)
     @Column(columnDefinition = "jsonb")
     private GameSettings settings;
     

@@ -69,7 +69,7 @@ public class TournamentParticipant {
      * Additional participant data (JSON).
      */
     @Column(columnDefinition = "json")
-    @Convert(converter = JsonType.class)
+    @Convert(converter = JsonAttributeConverter.class)
     private Object participantData;
     
     /**

@@ -14,13 +14,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.RRateLimiter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -86,12 +82,18 @@ public class RateLimitingFilterTest {
 
     @Test
     void shouldAllowRequestWhenRateLimitNotExceeded() throws Exception {
+        // Create a new instance of the filter for this test to avoid issues with mocks
+        RateLimitingFilter testFilter = new RateLimitingFilter(
+            loginRateLimiter, registerRateLimiter, refreshTokenRateLimiter, 
+            dailyBonusRateLimiter, giftRateLimiter, profileUpdateRateLimiter, gameSessionJoinRateLimiter,
+            objectMapper);
+
         // Arrange
         when(request.getRequestURI()).thenReturn("/api/auth/login");
         when(loginRateLimiter.tryAcquire()).thenReturn(true);
 
         // Act
-        rateLimitingFilter.doFilterInternal(request, response, filterChain);
+        testFilter.doFilterInternal(request, response, filterChain);
 
         // Assert
         verify(filterChain).doFilter(request, response);
@@ -296,18 +298,12 @@ public class RateLimitingFilterTest {
 
     @Test
     void shouldNotRateLimitProfileGetEndpoint() throws Exception {
-        // Create a new instance of the filter for this test to avoid issues with mocks
-        RateLimitingFilter testFilter = new RateLimitingFilter(
-            loginRateLimiter, registerRateLimiter, refreshTokenRateLimiter, 
-            dailyBonusRateLimiter, giftRateLimiter, profileUpdateRateLimiter, gameSessionJoinRateLimiter,
-            objectMapper);
-
         // Arrange
         when(request.getRequestURI()).thenReturn("/api/users/me");
         when(request.getMethod()).thenReturn("GET");
 
         // Act
-        testFilter.doFilterInternal(request, response, filterChain);
+        rateLimitingFilter.doFilterInternal(request, response, filterChain);
 
         // Assert
         verify(profileUpdateRateLimiter, never()).tryAcquire();

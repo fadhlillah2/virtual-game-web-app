@@ -29,15 +29,16 @@ import java.util.UUID;
 
 /**
  * Controller for handling tournament operations.
+ * TEMPORARILY DISABLED - TournamentService implementation not complete
  */
-@Controller
-@RequestMapping("/tournaments")
-@Slf4j
+//@Controller
+//@RequestMapping("/tournaments")
+//@Slf4j
 public class TournamentController {
     
     private final TournamentService tournamentService;
     
-    @Autowired
+    //@Autowired
     public TournamentController(TournamentService tournamentService) {
         this.tournamentService = tournamentService;
     }

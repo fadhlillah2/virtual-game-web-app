@@ -3,9 +3,7 @@ version: '3.8'
 services:
   # Application service
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: virtual-game-app:latest
     container_name: virtual-game-app
     depends_on:
       - postgres
@@ -23,9 +21,9 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     networks:
       - virtual-game-network
-    # For development, enable hot reload
-    volumes:
-      - ./src:/app/src
+    # Volumes for development (commented out for production build)
+    # volumes:
+    #   - ./src:/app/src
     restart: unless-stopped
 
   # PostgreSQL database
@@ -92,6 +90,7 @@ services:
     ports:
       - "9092:9092"
       - "29092:29092"
+      - "9308:9308"
     environment:
       - KAFKA_BROKER_ID=1
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
@@ -100,6 +99,9 @@ services:
       - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
       - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_JMX_HOSTNAME=kafka
+      - KAFKA_JMX_PORT=9308
+      - KAFKA_JMX_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.port=9308 -Dcom.sun.management.jmxremote.rmi.port=9308
     volumes:
       - kafka-data:/var/lib/kafka/data
     networks:

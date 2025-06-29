@@ -11,7 +11,8 @@ import org.springframework.data.redis.core.ValueOperations;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,13 +31,13 @@ public class RedisBlacklistedTokenRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         blacklistedTokenRepository = new RedisBlacklistedTokenRepository(redisTemplate);
     }
 
     @Test
     void blacklistToken_ShouldStoreTokenInRedis() {
         // Arrange
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         long expirationTime = System.currentTimeMillis() + 3600000; // 1 hour from now
 
         // Act
@@ -81,6 +82,9 @@ public class RedisBlacklistedTokenRepositoryTest {
 
     @Test
     void removeFromBlacklist_ShouldDeleteTokenFromRedis() {
+        // Arrange
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
         // Act
         blacklistedTokenRepository.removeFromBlacklist(TEST_TOKEN);
 

@@ -44,15 +44,13 @@ public class TokenCleanupTaskTest {
         
         mockKeys.add(BLACKLIST_KEY_PREFIX + expiredToken);
         mockKeys.add(BLACKLIST_KEY_PREFIX + validToken);
-        
-        // Mock JwtUtil behavior
-        when(jwtUtil.isTokenExpired(expiredToken)).thenReturn(true);
-        when(jwtUtil.isTokenExpired(validToken)).thenReturn(false);
     }
 
     @Test
     void cleanupExpiredTokens_ShouldRemoveExpiredTokens() {
         // Arrange
+        when(jwtUtil.isTokenExpired(expiredToken)).thenReturn(true);
+        when(jwtUtil.isTokenExpired(validToken)).thenReturn(false);
         when(redisTemplate.keys(BLACKLIST_KEY_PREFIX + "*")).thenReturn(mockKeys);
         when(redisTemplate.delete(BLACKLIST_KEY_PREFIX + expiredToken)).thenReturn(true);
         
@@ -132,6 +130,8 @@ public class TokenCleanupTaskTest {
         mockKeys.add(BLACKLIST_KEY_PREFIX + errorToken);
         
         when(redisTemplate.keys(BLACKLIST_KEY_PREFIX + "*")).thenReturn(mockKeys);
+        when(jwtUtil.isTokenExpired(expiredToken)).thenReturn(true);
+        when(jwtUtil.isTokenExpired(validToken)).thenReturn(false);
         when(jwtUtil.isTokenExpired(errorToken)).thenThrow(new RuntimeException("Test exception"));
         when(redisTemplate.delete(BLACKLIST_KEY_PREFIX + expiredToken)).thenReturn(true);
         

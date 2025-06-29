@@ -1,16 +1,12 @@
 package co.id.virtual.game.web.app.security;
 
-import co.id.virtual.game.web.app.config.SecurityConfig;
-import co.id.virtual.game.web.app.controller.AuthController;
-import co.id.virtual.game.web.app.controller.GameController;
-import co.id.virtual.game.web.app.filter.RateLimitingFilter;
 import co.id.virtual.game.web.app.service.AuthService;
 import co.id.virtual.game.web.app.service.GameService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
@@ -19,10 +15,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Tests for CSRF protection.
- */
-@WebMvcTest({GameController.class, AuthController.class})
+@SpringBootTest
+@AutoConfigureMockMvc
 public class CsrfProtectionTest {
 
     @Autowired
@@ -33,6 +27,8 @@ public class CsrfProtectionTest {
 
     @MockBean
     private AuthService authService;
+
+    
 
     /**
      * Test that a POST request to a protected endpoint without a CSRF token is rejected.
@@ -73,3 +69,4 @@ public class CsrfProtectionTest {
                 .andExpect(status().isOk());
     }
 }
+

@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Type;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -34,7 +33,7 @@ public class GameSession {
     @JoinColumn(name = "game_id")
     private Game game;
     
-    @Type(JsonType.class)
+    @Convert(converter = JsonAttributeConverter.class)
     @Column(name = "session_data", columnDefinition = "jsonb")
     private SessionData sessionData;
     

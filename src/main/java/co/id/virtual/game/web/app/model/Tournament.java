@@ -100,7 +100,7 @@ public class Tournament {
      * The prize distribution (JSON).
      */
     @Column(columnDefinition = "json")
-    @Convert(converter = JsonType.class)
+    @Convert(converter = JsonAttributeConverter.class)
     private Object prizeDistribution;
     
     /**
